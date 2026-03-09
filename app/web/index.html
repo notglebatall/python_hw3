@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shortly</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --panel: #fffdf8;
+      --ink: #1a1a1a;
+      --muted: #6e665d;
+      --accent: #ff6a00;
+      --line: #e3d8c8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top right, #ffe8d1, var(--bg) 45%);
+      color: var(--ink);
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    .hero {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    h1 { margin: 0 0 8px; font-size: 38px; }
+    .sub { color: var(--muted); margin: 0; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 12px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .card h2 { margin: 0 0 10px; font-size: 18px; }
+    label { display: block; font-size: 13px; color: var(--muted); margin-top: 8px; }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 4px;
+      border: 1px solid #d2c4b1;
+      border-radius: 10px;
+      background: #fff;
+    }
+    button {
+      margin-top: 10px;
+      background: var(--accent);
+      border: 0;
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .ghost {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      margin-left: 8px;
+    }
+    pre {
+      margin: 10px 0 0;
+      background: #1c1f24;
+      color: #d9e0ea;
+      padding: 10px;
+      border-radius: 10px;
+      overflow: auto;
+      min-height: 48px;
+      font-size: 12px;
+    }
+    .token { word-break: break-all; font-size: 12px; color: var(--muted); }
+    .hidden { display: none; }
+    .result {
+      margin-top: 12px;
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      background: #fff;
+    }
+    .result p { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+    .result a { font-size: 15px; font-weight: 700; }
+    a { color: #0057c2; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="hero">
+      <h1>Shortly</h1>
+      <p class="sub">Сервис сокращения ссылок</p>
+      <button id="logoutBtn" class="hidden" onclick="logoutUser()">Выйти</button>
+    </section>
+
+    <section id="authSection" class="grid">
+      <article class="card">
+        <h2>Регистрация и вход</h2>
+        <p class="sub">Сначала зарегистрируйтесь, затем войдите. После входа откроются функции сервиса.</p>
+        <label>Эл. почта<input id="authEmail" /></label>
+        <label>Пароль<input id="authPassword" type="password" /></label>
+        <button onclick="registerUser()">Зарегистрироваться</button>
+        <button onclick="loginUser()">Войти</button>
+        <pre id="authOut"></pre>
+      </article>
+    </section>
+
+    <section id="featuresSection" class="grid hidden">
+      <article class="card">
+        <h2>Сокращение ссылки</h2>
+        <label>Оригинальный URL<input id="createUrl" value="https://example.com/some/very/long/url" /></label>
+        <button onclick="createLink()">Сократить</button>
+        <button class="ghost" onclick="copyShortUrl()">Скопировать</button>
+        <div id="shortResult" class="result hidden">
+          <p>Короткая ссылка:</p>
+          <a id="shortLink" href="#" target="_blank" rel="noopener noreferrer"></a>
+        </div>
+        <pre id="createOut"></pre>
+      </article>
+
+      <article class="card">
+        <h2>Статистика и поиск</h2>
+        <label>Короткий код<input id="statsCode" placeholder="мой_алиас" /></label>
+        <button onclick="getStats()">Получить статистику</button>
+        <label>Оригинальный URL<input id="searchUrl" placeholder="https://example.com/..." /></label>
+        <button onclick="searchByUrl()">Найти по URL</button>
+        <pre id="statsOut"></pre>
+      </article>
+
+      <article class="card">
+        <h2>Управление</h2>
+        <label>Короткий код<input id="manageCode" placeholder="мой_алиас" /></label>
+        <label>Новый оригинальный URL<input id="manageUrl" placeholder="https://example.org/new" /></label>
+        <button onclick="updateLink()">Обновить</button>
+        <button onclick="deleteLink()">Удалить</button>
+        <pre id="manageOut"></pre>
+      </article>
+    </section>
+  </div>
+
+  <script>
+    const api = "";
+
+    function getToken() { return localStorage.getItem("token") || ""; }
+    function setToken(token) {
+      if (token) {
+        localStorage.setItem("token", token);
+      } else {
+        localStorage.removeItem("token");
+      }
+      updateAuthView();
+    }
+    function updateAuthView() {
+      const loggedIn = Boolean(getToken());
+      document.getElementById("featuresSection").classList.toggle("hidden", !loggedIn);
+      document.getElementById("logoutBtn").classList.toggle("hidden", !loggedIn);
+      document.getElementById("authSection").classList.toggle("hidden", loggedIn);
+    }
+    function logoutUser() {
+      setToken("");
+      out("authOut", "Вы вышли из аккаунта.");
+    }
+
+    async function req(path, options = {}) {
+      const headers = options.headers || {};
+      const token = getToken();
+      if (token) headers.Authorization = `Bearer ${token}`;
+      if (options.body && !headers["Content-Type"]) headers["Content-Type"] = "application/json";
+      const res = await fetch(api + path, { ...options, headers });
+      const text = await res.text();
+      let body;
+      try { body = JSON.parse(text); } catch { body = text; }
+      return { ok: res.ok, status: res.status, body, headers: res.headers };
+    }
+
+    function out(id, data) {
+      document.getElementById(id).textContent = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+    }
+
+    async function registerUser() {
+      const email = document.getElementById("authEmail").value;
+      const password = document.getElementById("authPassword").value;
+      const r = await req("/auth/register", { method: "POST", body: JSON.stringify({ email, password }) });
+      if (r.ok) {
+        out("authOut", "Регистрация успешна. Теперь выполните вход.");
+        return;
+      }
+      out("authOut", r);
+    }
+
+    async function loginUser() {
+      const email = document.getElementById("authEmail").value;
+      const password = document.getElementById("authPassword").value;
+      const r = await req("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) });
+      if (r.ok && r.body.access_token) setToken(r.body.access_token);
+      out("authOut", r);
+    }
+
+    async function createLink() {
+      const original_url = document.getElementById("createUrl").value;
+      const payload = { original_url };
+      const r = await req("/shorten", { method: "POST", body: JSON.stringify(payload) });
+      if (r.ok && r.body.short_url) {
+        const shortLink = document.getElementById("shortLink");
+        shortLink.href = r.body.short_url;
+        shortLink.textContent = r.body.short_url;
+        document.getElementById("shortResult").classList.remove("hidden");
+        document.getElementById("statsCode").value = r.body.short_code;
+        document.getElementById("manageCode").value = r.body.short_code;
+        out("createOut", {
+          original_url: r.body.original_url,
+          short_url: r.body.short_url,
+          short_code: r.body.short_code
+        });
+      } else {
+        document.getElementById("shortResult").classList.add("hidden");
+        out("createOut", r);
+      }
+    }
+
+    async function copyShortUrl() {
+      const shortUrl = document.getElementById("shortLink").textContent || "";
+      if (!shortUrl) {
+        out("createOut", "Сначала создайте короткую ссылку.");
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(shortUrl);
+        out("createOut", `Скопировано: ${shortUrl}`);
+      } catch (_err) {
+        out("createOut", "Не удалось скопировать автоматически. Скопируйте ссылку вручную.");
+      }
+    }
+
+    async function getStats() {
+      const code = document.getElementById("statsCode").value;
+      const r = await req(`/links/${encodeURIComponent(code)}/stats`);
+      out("statsOut", r);
+    }
+
+    async function searchByUrl() {
+      const url = document.getElementById("searchUrl").value;
+      const r = await req(`/links/search?original_url=${encodeURIComponent(url)}`);
+      out("statsOut", r);
+    }
+
+    async function updateLink() {
+      const code = document.getElementById("manageCode").value;
+      const original_url = document.getElementById("manageUrl").value;
+      const r = await req(`/links/${encodeURIComponent(code)}`, {
+        method: "PUT",
+        body: JSON.stringify({ original_url })
+      });
+      out("manageOut", r);
+    }
+
+    async function deleteLink() {
+      const code = document.getElementById("manageCode").value;
+      const r = await req(`/links/${encodeURIComponent(code)}`, { method: "DELETE" });
+      out("manageOut", r);
+    }
+
+    setToken(getToken());
+  </script>
+</body>
+</html>
