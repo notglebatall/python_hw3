@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     cache_redirect_ttl_seconds: int = 3600
     cache_stats_ttl_seconds: int = 300
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(extra="ignore")
 
     @model_validator(mode="after")
     def normalize_urls(self):
