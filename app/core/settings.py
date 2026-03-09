@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import model_validator
 
 
 class Settings(BaseSettings):
@@ -19,6 +20,14 @@ class Settings(BaseSettings):
     cache_stats_ttl_seconds: int = 300
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    @model_validator(mode="after")
+    def normalize_urls(self):
+        if self.database_url.startswith("postgres://"):
+            self.database_url = self.database_url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif self.database_url.startswith("postgresql://") and "+asyncpg" not in self.database_url:
+            self.database_url = self.database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return self
 
 
 settings = Settings()

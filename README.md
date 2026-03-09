@@ -150,3 +150,26 @@ curl -X DELETE http://localhost:8000/links/myalias \
 Раз в минуту выполняется очистка:
 - истекших ссылок (`expires_at`),
 - неиспользуемых ссылок по `UNUSED_LINK_TTL_DAYS`.
+
+## Деплой на Render
+
+Важно: `docker-compose` в Render не используется. Сервисы БД/Redis нужно создавать отдельно в Render и передавать URL через переменные окружения.
+
+1. Создайте в Render:
+- PostgreSQL service
+- Redis service
+- Web Service (Docker)
+
+2. В Web Service задайте переменные окружения:
+- `DATABASE_URL` = Internal Database URL из Render PostgreSQL
+- `REDIS_URL` = Internal Redis URL из Render Redis
+- `JWT_SECRET` = любой длинный секрет
+- `DEBUG` = `false`
+
+3. Убедитесь, что в `DATABASE_URL` не используется хост `postgres` (это работает только в локальном `docker-compose`).
+
+4. Перезапустите деплой.
+
+Примечание:
+- Проект автоматически конвертирует `postgres://...` и `postgresql://...` в формат `postgresql+asyncpg://...`.
+- Приложение слушает порт из переменной `PORT`, которую задает Render.
