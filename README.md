@@ -166,6 +166,10 @@ curl -X DELETE http://localhost:8000/links/myalias \
 - `JWT_SECRET` = любой длинный секрет
 - `DEBUG` = `false`
 
+Важно:
+- вставляйте URL без кавычек (`"` или `'`);
+- не используйте хосты `postgres`, `redis`, `localhost` в Render.
+
 3. Убедитесь, что в `DATABASE_URL` не используется хост `postgres` (это работает только в локальном `docker-compose`).
 
 4. Перезапустите деплой.
