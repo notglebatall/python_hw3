@@ -2,10 +2,27 @@
 
 Сервис сокращения ссылок на `FastAPI + PostgreSQL + Redis`.
 
+## Единая версия Python и единый venv
+
+Проект приведён к одной версии Python: `3.12`.
+
+- Docker использует `python:3.12-slim`.
+- Локально нужно использовать один виртуальный env: `.venv`.
+- Если рядом есть старые окружения вроде `.venv312`, они больше не нужны для работы проекта.
+
+Создание и наполнение единственного окружения:
+
+```bash
+python3.12 -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements.txt
+```
+
 ## Инструкция по запуску
 
 
 ```bash
+. .venv/bin/activate
 docker compose up -d --build
 ```
 
@@ -150,3 +167,18 @@ curl -X DELETE http://localhost:8000/links/myalias \
 Раз в минуту выполняется очистка:
 - истекших ссылок (`expires_at`),
 - неиспользуемых ссылок по `UNUSED_LINK_TTL_DAYS`.
+
+## Тестирование и покрытие
+
+```bash
+. .venv/bin/activate
+python -m pytest tests
+python -m coverage run --source=app -m pytest tests
+python -m coverage report -m
+python -m coverage html
+```
+
+Актуальное покрытие кода приложения (`app/`) составляет `93%`.
+
+- Текстовая инструкция: [tests/TESTING.md](tests/TESTING.md)
+- HTML-отчёт покрытия: [htmlcov/index.html](htmlcov/index.html)
