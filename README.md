@@ -181,4 +181,3 @@ python -m coverage html
 Актуальное покрытие кода приложения (`app/`) составляет `93%`.
 
 - Текстовая инструкция: [tests/TESTING.md](tests/TESTING.md)
-- HTML-отчёт покрытия: [htmlcov/index.html](htmlcov/index.html)
